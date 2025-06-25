@@ -1,0 +1,38 @@
+#!/bin/bash
+VM_NAME="Centos"
+OS_TYPE="RedHat_64"
+ISO_PATH="/path/to/ubuntu.iso"
+DISK_SIZE=18000 # in MB
+
+# Create and register VM
+VBoxManage createvm --name "$VM_NAME" --ostype "$OS_TYPE" --register
+
+# Configure hardware
+VBoxManage modifyvm "$VM_NAME" \
+  --memory 1920 \
+  --cpus 2 \
+  --nic1 nat
+
+# Create and attach storage
+VBoxManage createmedium disk --filename "$VM_NAME.vdi" --size $DISK_SIZE --format VDI
+VBoxManage storagectl "$VM_NAME" --name "SATA" --add sata
+VBoxManage storageattach "$VM_NAME" \
+  --storagectl "SATA" \
+  --port 0 \
+  --device 0 \
+  --type hdd \
+  --medium "$VM_NAME.vdi"
+
+# Attach OS ISO
+VBoxManage storageattach "$VM_NAME" \
+  --storagectl "SATA" \
+  --port 1 \
+  --device 0 \
+  --type dvddrive \
+  --medium "$ISO_PATH"
+
+# Start the VM (headless)
+VBoxManage startvm "$VM_NAME" --type headless \
+--user=jenkins \
+--password=1234 \
+--install-additions
